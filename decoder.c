@@ -216,17 +216,16 @@ RI* check_image_format(RI* image) {
 				FORMAT[0] = 0xe0;
 
 				// Initalize the Segment Marker for new_image(JFIF)
-				image->new_image[2] = 0xff;
-				image->new_image[3] = 0xe0; /*
+				image->new_image[2] = 0x00E0; /*
 							    * This will convert to -37, because of signed 2's
 							    * complement
 							    */
-				image->new_image[4] = 0x00;
-				image->new_image[5] = image->file_info[4];
+				image->new_image[3] = 0x00;
+				image->new_image[4] = image->file_info[4];
 
-				index = 6;
+				index = 4;
 
-				for(int i = 0; i < image->new_image[5]; i++) 
+				for(int i = 0; i < image->new_image[4]; i++) 
 				{ // this should assign the values of JFIF etc
 					index++;
 					image->new_image[index] = image->file_info[index]; 
@@ -235,44 +234,38 @@ RI* check_image_format(RI* image) {
 				FORMAT[1] = 0xdb;
 				break;
 			}
-			case 37: { // 0xdb
+			case -37: { // 0xdb
 				CV = (67 * 3) + 18;
 
 				FORMAT[0] = 0xe0;
 
 				// The new image supports the same format: 0xff, 0xe0 -> Segment Marker(for JFIF)
-				image->new_image[3] = 0xff;
-				image->new_image[4] = 0xe0;
-				image->new_image[5] = 00;
-				image->new_image[6] = 0xA;
+				image->new_image[3] = 0xffe0;
+				image->new_image[4] = 0x000A;
 				
 				// JFIF
-				image->new_image[7] = 0x4a;
+				image->new_image[5] = 0x4a;
+				image->new_image[6] = 0x46;
+				image->new_image[7] = 0x49;
 				image->new_image[8] = 0x46;
-				image->new_image[9] = 0x49;
-				image->new_image[10] = 0x46;
-				image->new_image[11] = 0x00;
+				image->new_image[9] = 0x00;
 
 				// Cover rest of bytes with default values
-				image->new_image[12] = 0x01;
-				image->new_image[13] = 0x00;
-				image->new_image[14] = 0x00;
-				image->new_image[15] = 0x01;
-				image->new_image[16] = 0x00;
-				image->new_image[17] = 0x01;
-				image->new_image[18] = 0x00;
-				image->new_image[19] = 0x00;
+				image->new_image[10] = 0x0100;
+				image->new_image[11] = 0x0001;
+				image->new_image[12] = 0x0100;
+				image->new_image[13] = 0x0100;
+				image->new_image[14] = 0x0000;
 
 				FORMAT[1] = 0xdb;
 
 				// Initalize the DQT for new_image
-				image->new_image[20] = 0xff;
-				image->new_image[21] = 0xdb; /*
+				image->new_image[15] = 0xff;
+				image->new_image[16] = 0xdb; /*
 							     * This will convert to -37, because of signed 2's
 							     * complement
 							     */
-				image->new_image[22] = 0xff;
-				image->new_image[23] = image->file_info[23];
+				image->new_image[17] = image->file_info[17];
 				
 				index = 23;
 				//printf("HERE: db, %d", image->file_info[4]);
