@@ -16,7 +16,7 @@ static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
 #define _REVERSE_OFFSET(pixel) ((pixel ^ _DBO) << 1) // Strictly matches the pixel to the 2 bits, then dims it
 
 
-/* UNSUPPORTED VALUES */
+/* UNSUPPORTED VALUES. FOR ERROR CHECKING */
 const int U_SOF2  = 0xc2;
 const int U_SOF3  = 0xc3;
 const int U_SOF4  = 0xc4;
@@ -26,7 +26,7 @@ const int U_SOF7  = 0xc7;
 const int U_SOF10 = 0xcA;
 const int U_SOF11 = 0xCB;
 
-/* UNSUPPORTED SIGNED 2's COMPLEMENT VALUES */
+/* UNSUPPORTED SIGNED 2's COMPLEMENT VALUES. FOR ERROR CHECKING */
 const int _U_SOF2  = -62;
 const int _U_SOF3  = -61;
 const int _U_SOF4  = -60;
@@ -278,12 +278,12 @@ RI* check_image_format(RI* image) {
 				printf("HERE: db, %d", image->file_info[4]);
 				break;
 			}
-			case 0xc2:
-			case 0xc3:
-			case 0xc4:
-			case 0xc5:
-			case 0xc6:
-			case 0xc7: {
+			case U_SOF2:
+			case U_SOF3:
+			case U_SOF4:
+			case U_SOF5:
+			case U_SOF6:
+			case U_SOF7: {
 				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
 				exit(EXIT_FAILURE);
 				break;
