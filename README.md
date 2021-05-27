@@ -2,6 +2,9 @@
 
 JPEG decoder written in C.
 
+### VERSION 0.1.0
+#### There will be a later version supporting odd JPEG file formats, such that of a JPEG file without the JFIF header
+
 Command Line args:
 
 - Filename
