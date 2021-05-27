@@ -198,6 +198,8 @@ RI* check_image_format(RI* image) {
 			case 16: { // 0xe0
 				CV = (16 * 16) - 32;
 
+				FORMAT[0] = 0xe0;
+
 				// Initalize the Segment Marker for new_image(JFIF)
 				image->new_image[3] = 0xff;
 				image->new_image[4] = 0xe0; /*
@@ -213,6 +215,8 @@ RI* check_image_format(RI* image) {
 					image->new_image[index] = image->file_info[index];
 				}
 
+				FORMAT[1] = 0xdb;
+
 				image->new_image[index + 1] = 0xff;
 				image->new_image[index + 2] = 0xdb;
 				
@@ -222,6 +226,8 @@ RI* check_image_format(RI* image) {
 			}
 			case 67: { // 0xdb
 				CV = (67 * 3) + 18;
+
+				FORMAT[0] = 0xe0;
 
 				// The new image supports the same format: 0xff, 0xe0 -> Segment Marker(for JFIF)
 				image->new_image[3] = 0xff;
@@ -245,6 +251,8 @@ RI* check_image_format(RI* image) {
 				image->new_image[17] = 0x01;
 				image->new_image[18] = 0x00;
 				image->new_image[19] = 0x00;
+
+				FORMAT[1] = 0xdb;
 
 				// Initalize the DQT for new_image
 				image->new_image[5] = 0xff;
