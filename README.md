@@ -52,3 +52,21 @@ This action is defined with _0xFF 0xDB_. Lets see:
 
 The sequence, fully initialized is now:
 `0xFF0xD8 0xFF0xE0 0x000x10 0x4a0x46 0x490x46 0x000x00 0x010x01 0x000x00 0x010x00 0x010x00 0xFF0xDB`
+
+### Tables
+There are one of two tables you will run into, the _Quantization Table_ and the _Huffman Table_.
+Neither are needed for this project since we primarily are just copying the values of each "_table_" into the new image and continuing on.
+The only thing we will be changing are the pixels.
+
+A _Huffman Table_ is defined with _0xFF 0xC4_. Each tables syntax is the definition and the length. Example, a _Huffman Table_ with a length of 16:
+`0xFF 0xC4 0x00 0x10`
+
+There are, by default, 16 bytes built into the _Huffman Table_ to give each symbol a code 1..16. The rest of the information, which would be another 16 bytes, will just be information about the image.
+
+A _Quantization Table_ is primarily the same as a _Huffman Table_.
+It takes in the definition and the length as its first 4 bytes.
+
+Example of a _Quantization Table_ with a length of 16:
+`0xFF 0xDB 0x00 0x10`
+
+1 byte of the 16 is given to the QT information which is just a bit 0...3. 4..7 is the precision, 0 = 8 bit and otherwise it's 16. The rest are assigned to values about the image. Primarily, it gives QT values. `64*(precision + 1)`.
