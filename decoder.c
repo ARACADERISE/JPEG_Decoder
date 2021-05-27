@@ -290,6 +290,7 @@ RI* check_image_format(RI* image) {
 		static int n_index = 0;
 		n_index += index;
 
+redo:
 		switch(image->file_info[index + 2])
 		{
 			case -124:
@@ -312,7 +313,7 @@ RI* check_image_format(RI* image) {
 					image->last_index = n_index;
 
 					goto end;
-				}
+				} else goto redo;
 			}
 		}
 	}
