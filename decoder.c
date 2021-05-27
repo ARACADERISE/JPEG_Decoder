@@ -7,7 +7,7 @@ static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
 
 /* HELPER FUNCTION TO OFFSET THE CURRENT PIXEL 
  *
- * The normal diffference between both is 1 pixel when doing a normal offset.
+ * The normal diffference between both is 2 pixels when doing a normal offset.
  * With a reverse offset, the difference is 6 pixels(normally).
  */
 #define OFFSET(pixel) (pixel << _DBO) 		// brightens the pixel
