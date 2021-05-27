@@ -139,6 +139,12 @@ static char* DHT_TOS;
 /* START OF FRAME MARkEr */
 static int SOS[2] = {0xff, 0xda};
 
+/* 
+ * LAYOUT OF FILE. THIS WILL BE CHECKED AT THE END TO MAKE SURE THE
+ * FILE FORMAT IS OKAY.
+ */
+static int FORMAT[15];
+
 /*
  * TESTING PURPOSES. DO NOT USE.
  *
