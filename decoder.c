@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Corresponding 2's COMPLEMENT OF EACH VALUE */
 const int DQT_starter = -37;
 const int DHT_starter = -60; /*
 		      * Corresponding values:
@@ -156,16 +157,21 @@ RI* check_image_format(RI* image) {
 		 * 	-> 16 will stand for 0xe0
 		 * 	-> 67 will stand for 0xdb
 		 * */
+
+		unsigned char t = 0xc2;
+		printf("%d", t);
+
+		int CV = 0;
 		switch(image->file_info[4])
 		{
-			case 16: {
-				int value = (16 * 16) - 2;
+			case 16: { // 0xe0
+				CV = (16 * 16) - 32;
 				image->file_info[4] = 0xe0;
 				printf("HERE: e0");
 				break;
 			}
-			case 67: {
-				int value = (67 * 3) + 18;
+			case 67: { // 0xdb
+				CV = (67 * 3) + 18;
 				image->file_info[4] = 0xdb; /*
 							     * This will convert to
 							     * -37, because of
@@ -173,6 +179,22 @@ RI* check_image_format(RI* image) {
 							     *  complement
 							     */
 				printf("HERE: db, %d", image->file_info[4]);
+				break;
+			}
+			case 0xc2:
+			case 0xc3:
+			case 0xc4:
+			case 0xc5:
+			case 0xc6:
+			case 0xc7 {
+				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
+				exit(EXIT_FAILURE);
+				break;
+			}
+			default: {
+				fprintf(stderr, "Error: Invalid Format.");
+				exit(EXIT_FAILURE);
+				break;
 			}
 		}
 	}
