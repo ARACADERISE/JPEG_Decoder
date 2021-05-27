@@ -194,8 +194,8 @@ RI* check_image_format(RI* image) {
 
 				// Initalize for new_image
 				image->file_info[4] = 0xe0;
-				image->new_info[3] = 0xff;
-				image->new_info[4] = 0xe0; /*
+				image->new_image[3] = 0xff;
+				image->new_image[4] = 0xe0; /*
 							    * This will convert to -37, because of signed 2's
 							    * complement
 							    */
@@ -221,7 +221,7 @@ RI* check_image_format(RI* image) {
 			case 0xc4:
 			case 0xc5:
 			case 0xc6:
-			case 0xc7 {
+			case 0xc7: {
 				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
 				exit(EXIT_FAILURE);
 				break;
