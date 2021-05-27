@@ -208,6 +208,25 @@ RI* check_image_format(RI* image) {
 				// The new image supports the same format: 0xff, 0xe0 -> Segment Marker(for JFIF)
 				image->new_image[3] = 0xff;
 				image->new_image[4] = 0xe0;
+				image->new_image[5] = 00;
+				image->new_image[6] = 0xA;
+				
+				// JFIF
+				image->new_image[7] = 0x4a;
+				image->new_image[8] = 0x46;
+				image->new_image[9] = 0x49;
+				image->new_image[10] = 0x46;
+				image->new_image[11] = 0x00;
+
+				// Cover rest of bytes with default values
+				image->new_image[12] = 0x01;
+				image->new_image[13] = 0x00;
+				image->new_image[14] = 0x00;
+				image->new_image[15] = 0x01;
+				image->new_image[16] = 0x00;
+				image->new_image[17] = 0x01;
+				image->new_image[18] = 0x00;
+				image->new_image[19] = 0x00;
 
 				// Initalize the DQT for new_image
 				image->new_image[5] = 0xff;
