@@ -186,17 +186,27 @@ RI* check_image_format(RI* image) {
 		{
 			case 16: { // 0xe0
 				CV = (16 * 16) - 32;
+
+				// Initalize for new_image
 				image->file_info[4] = 0xe0;
+				image->new_info[3] = 0xff;
+				image->new_info[4] = 0xe0; /*
+							    * This will convert to -37, because of signed 2's
+							    * complement
+							    */
+
 				printf("HERE: e0");
 				break;
 			}
 			case 67: { // 0xdb
 				CV = (67 * 3) + 18;
-				image->file_info[4] = 0xdb; /*
-							     * This will convert to
-							     * -37, because of
-							     *  signed 2's
-							     *  complement
+
+				// Initalize for new_image
+				image->file_info[4] = 0xdb; 
+				image->new_image[3] = 0xff;
+				image->new_image[4] = 0xdb; /*
+							     * This will convert to -37, because of signed 2's
+							     * complement
 							     */
 				printf("HERE: db, %d", image->file_info[4]);
 				break;
