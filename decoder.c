@@ -310,9 +310,9 @@ RI* check_image_format(RI* image) {
 		}
 
 		// ToDo: Configure the tables.
+		static int n_index = index;
 
-		int n_index = index;
-
+redo:
 		for(int i = 0; i < image->new_image[index]; i++)
 		{
 			n_index++;
@@ -321,11 +321,22 @@ RI* check_image_format(RI* image) {
 
 		switch(image->new_image[n_index - 1])
 		{ // ToDo: Add functionality for checking for the next table.
-			default: break;
+			case 16:
+			case 67: { // DQT and DHT.
+				// Assign length
+				image->new_image[n_index + 1] = 0x00;
+				image->new_image[n_index + 2] = image->file_info[n_index + 2];
+				
+				n_index += 2;
+				
+				goto redo; // just redo it.
+				break;
+			}
+			default: goto end;break;
 		}
 	}
 
-
+end:
 	return image;
 }
 
