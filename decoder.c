@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const int DQT_starter = -36;
+const int DQT_starter = -37;
 const int DHT_starter = -60; /*
 		      * Corresponding values:
 		      * 	-36: 0xe0
