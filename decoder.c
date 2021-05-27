@@ -14,6 +14,8 @@ static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
 #define REVERESE_OFFSET(pixel) ((pixel ^ _DBO) << _DBO) // dims the pixel
 #define _OFFSET(pixel) ((pixel << _DBO) >> 1) 	// Strictly matches the pixel to the 2 bits, then brightens it
 #define _REVERSE_OFFSET(pixel) ((pixel ^ _DBO) << 1) // Strictly matches the pixel to the 2 bits, then dims it
+#define OFFSET_DEPENDABLE(pixel, size) ((pixel ^ (size - 1)) >> 1) // this will be used if the current pixel is down allot compared to it's neighbors. Max size is 4.
+#define REVERSE_DEPENDABLE(pixe, size) ((pixe << (size - 1)) >> 1) // this will be used if the current pixel is higher compared to it's neighbores. Max size is 4.
 
 /* TABLES */
 const int HT = 0xc4;
@@ -355,6 +357,11 @@ redo:
 	image->last_index = index + 1;
 }
 
+unsigned char contrast_pixel(RI* image)
+{
+
+}
+
 RI* read_frame(RI* image) 
 {
 	
@@ -386,6 +393,8 @@ RI* read_frame(RI* image)
 
 	if(image->file_info[image->last_index - 16] == -38)
 	{ // Time to work on the pixels :D
+		contrast_pixel(image);
+		/*
 		for(int i = image->last_index; i < image->file_size; i++)
 		{
 			image->new_image[i] = image->file_info[i];
@@ -393,7 +402,7 @@ RI* read_frame(RI* image)
 				image->last_index = i;
 				break;
 			}
-		}
+		}*/
 	}
 
 	printf("%d", image->file_info[image->last_index - 2]);
