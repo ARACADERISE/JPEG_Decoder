@@ -11,9 +11,9 @@ static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
  * With a reverse offset, the difference is 6 pixels(normally).
  */
 #define OFFSET(pixel) ((pixel | _DBO) >> _DBO) 		// brightens the pixel
-#define REVERESE_OFFSET(pixel) ((pixel | _DBO) << _DBO) // dims the pixel
+#define REVERESE_OFFSET(pixel) ((pixel ^ _DBO) << _DBO) // dims the pixel
 #define _OFFSET(pixel) ((pixel & _DBO) >> _DBO) 	// Strictly matches the pixel to the 2 bits, then brightens it
-#define _REVERSE_OFFSET(pixel) ((pixel & _DBO) << _DBO) // Strictly matches the pixel to the 2 bits, then dims it
+#define _REVERSE_OFFSET(pixel) ((pixel ^ _DBO) << _DBO) // Strictly matches the pixel to the 2 bits, then dims it
 
 
 /* UNSUPPORTED VALUES */
