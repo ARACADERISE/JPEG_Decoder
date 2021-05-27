@@ -54,7 +54,7 @@ The sequence, fully initialized is now:
 `0xFF0xD8 0xFF0xE0 0x000x10 0x4a0x46 0x490x46 0x000x00 0x010x01 0x000x00 0x010x00 0x010x00 0xFF0xDB`
 
 ### Tables
-There are one of two tables you will run into, the _Quantization Table_ and the _Huffman Table_.
+There are two tables you will run into, the _Quantization Table_ and the _Huffman Table_.
 Neither are needed for this project since we primarily are just copying the values of each "_table_" into the new image and continuing on.
 The only thing we will be changing are the pixels.
 
