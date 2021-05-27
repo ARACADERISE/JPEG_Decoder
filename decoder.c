@@ -90,6 +90,7 @@ typedef struct ReadImge {
 	size_t file_size;
 
 	unsigned char* new_image;
+	int last_index; // for checking
 } RI;
 
 /*
@@ -208,6 +209,7 @@ RI* check_image_format(RI* image) {
 		printf("%d", t);
 
 		int CV = 0;
+		int index = 0;
 		switch(image->file_info[4])
 		{
 			case 16: { // 0xe0
@@ -223,7 +225,7 @@ RI* check_image_format(RI* image) {
 							    */
 				image->new_image[5] = image->file_info[5];
 
-				int index = 5;
+				index = 5;
 				for(int i = 0; i < image->new_image[5]; i++) 
 				{ // this should assign the values of JFIF etc
 					index++;
@@ -243,7 +245,8 @@ RI* check_image_format(RI* image) {
 				{
 					image->new_image[index + 2] = 0xc4;
 				}
-				
+
+				index += 2;
 
 				printf("HERE: e0");
 				break;
@@ -284,7 +287,8 @@ RI* check_image_format(RI* image) {
 							     * This will convert to -37, because of signed 2's
 							     * complement
 							     */
-					
+				
+				index = 21;
 				printf("HERE: db, %d", image->file_info[4]);
 				break;
 			}
@@ -306,6 +310,19 @@ RI* check_image_format(RI* image) {
 		}
 
 		// ToDo: Configure the tables.
+
+		int n_index = index;
+
+		for(int i = 0; i < image->new_image[index]; i++)
+		{
+			n_index++;
+			image->new_image[n_index] = image->file_info[n_index];
+		}
+
+		switch(image->new_image[n_index - 1])
+		{ // ToDo: Add functionality for checking for the next table.
+			default: break;
+		}
 	}
 
 
