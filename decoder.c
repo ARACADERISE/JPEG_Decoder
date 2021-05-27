@@ -192,8 +192,7 @@ RI* check_image_format(RI* image) {
 			case 16: { // 0xe0
 				CV = (16 * 16) - 32;
 
-				// Initalize for new_image
-				image->file_info[4] = 0xe0;
+				// Initalize the Segment Marker for new_image(JFIF)
 				image->new_image[3] = 0xff;
 				image->new_image[4] = 0xe0; /*
 							    * This will convert to -37, because of signed 2's
@@ -206,10 +205,13 @@ RI* check_image_format(RI* image) {
 			case 67: { // 0xdb
 				CV = (67 * 3) + 18;
 
-				// Initalize for new_image
-				image->file_info[4] = 0xdb; 
+				// The new image supports the same format: 0xff, 0xe0 -> Segment Marker(for JFIF)
 				image->new_image[3] = 0xff;
-				image->new_image[4] = 0xdb; /*
+				image->new_image[4] = 0xe0;
+
+				// Initalize the DQT for new_image
+				image->new_image[5] = 0xff;
+				image->new_image[6] = 0xdb; /*
 							     * This will convert to -37, because of signed 2's
 							     * complement
 							     */
