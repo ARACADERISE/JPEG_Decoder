@@ -84,7 +84,7 @@ typedef struct ReadImge {
 	} ImageType;
 
 	// File to write to
-	FILE* _WRITE;
+	char* _WRITE;
 
 	char* file_info;
 	size_t file_size;
@@ -104,7 +104,7 @@ RI* init_image(char* filename) {
 	if(file) {
 		RI* img_info = calloc(1, sizeof(*img_info));
 
-		img_info->_WRITE = fopen(filename, "wb");
+		img_info->_WRITE = filename;
 
 		fseek(file, 1, SEEK_END);
 		img_info->file_size = ftell(file);
@@ -205,9 +205,6 @@ RI* check_image_format(RI* image) {
 		 * 	-> 67 will stand for 0xdb
 		 * */
 
-		unsigned char t = 0xc2;
-		printf("%d", t);
-
 		int CV = 0;
 		int index = 0;
 		switch(image->file_info[4])
@@ -219,14 +216,18 @@ RI* check_image_format(RI* image) {
 
 				// Initalize the Segment Marker for new_image(JFIF)
 				image->new_image[3] = 0xff;
-				image->new_image[4] = 0xe0; /*
+				image->new_image[5] = 0xe0; /*
 							    * This will convert to -37, because of signed 2's
 							    * complement
 							    */
-				image->new_image[5] = image->file_info[5];
+				image->new_image[5] = 0x00;
+				image->new_image[6] = image->file_info[4];
 
-				index = 5;
-				for(int i = 0; i < image->new_image[5]; i++) 
+
+				index = 6;
+				printf("\t\t%d", image->new_image[6]);
+
+				for(int i = 0; i < image->new_image[6]; i++) 
 				{ // this should assign the values of JFIF etc
 					index++;
 					image->new_image[index] = image->file_info[index];
@@ -234,21 +235,24 @@ RI* check_image_format(RI* image) {
 
 				FORMAT[1] = 0xdb;
 
-				image->new_image[index + 1] = 0xff;
+				image->new_image[index] = 0xff;
 
 				// Configure the type of table it is.
-				if(image->file_info[index + 2] == 0xdb)
-				{
-					image->new_image[index + 2] = 0xdb;
+				if(image->file_info[index] == -124)
+				{ // -124 codes for FF84
+					image->new_image[index + 1] = 0xdb;
 				}
-				if(image->file_info[index + 2] == 0xc4)
-				{
-					image->new_image[index + 2] = 0xc4;
+				if(image->file_info[index] == 0xc4)
+				{ // ToDo: Fix This
+					image->new_image[index + 1] = 0xc4;
 				}
 
-				index += 2;
+				image->new_image[index + 3] = 0x00;
+				image->new_image[index + 4] = image->file_info[index];
+				printf("%d", index);
+				index += 4;
 
-				printf("HERE: e0");
+				//printf("HERE: e0");
 				break;
 			}
 			case 67: { // 0xdb
@@ -287,9 +291,11 @@ RI* check_image_format(RI* image) {
 							     * This will convert to -37, because of signed 2's
 							     * complement
 							     */
+				image->new_image[22] = 0xff;
+				image->new_image[23] = image->file_info[23];
 				
-				index = 21;
-				printf("HERE: db, %d", image->file_info[4]);
+				index = 23;
+				//printf("HERE: db, %d", image->file_info[4]);
 				break;
 			}
 			case 0xc2:
@@ -320,20 +326,21 @@ redo:
 			image->new_image[n_index] = image->file_info[n_index];
 		}
 
-		switch(image->new_image[n_index - 1])
+		switch(image->new_image[n_index])
 		{ // ToDo: Add functionality for checking for the next table.
 			case 16:
 			case 67: { // DQT and DHT.
 				// Assign length
+				printf("REDO");
 				image->new_image[n_index + 1] = 0x00;
 				image->new_image[n_index + 2] = image->file_info[n_index + 2];
-				
+				printf("\t\t%d", image->new_image[n_index + 2]);
 				n_index += 2;
 				
 				goto redo; // just redo it.
-				break;
 			}
 			default: {
+				printf("def");
 				image->last_index = n_index;
 				goto end;
 				break;
@@ -350,8 +357,8 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Expected: FILENAME ACTION.\nExample: ./main.o img.jpg \"ODD\"\n\tThe ODD action takes and reverses each pixel by a default of 2 bits to the left.");
 		exit(EXIT_FAILURE);
 	}
-	printf("%s:%s\n", argv[1], argv[2]);
-	RI* img = init_image("img2.jpg");
+	//printf("%s:%s\n", argv[1], argv[2]);
+	RI* img = init_image("img3.jpeg");
 	
 	check_image_format(img);
 }
