@@ -2,20 +2,24 @@
 #include <stdlib.h>
 
 /* UNSUPPORTED VALUES */
-const int U_SOF2 = 0xc2;
-const int U_SOF3 = 0xc3;
-const int U_SOF4 = 0xc4;
-const int U_SOF5 = 0xc5;
-const int U_SOF6 = 0xc6;
-const int U_SOF7 = 0xc7;
+const int U_SOF2  = 0xc2;
+const int U_SOF3  = 0xc3;
+const int U_SOF4  = 0xc4;
+const int U_SOF5  = 0xc5;
+const int U_SOF6  = 0xc6;
+const int U_SOF7  = 0xc7;
+const int U_SOF10 = 0xcA;
+const int U_SOF11 = 0xCB
 
 /* UNSUPPORTED SIGNED 2's COMPLEMENT VALUES */
-const int _U_SOF2 = -62;
-const int _U_SOF3 = -61;
-const int _U_SOF4 = -60;
-const int _U_SOF5 = -59;
-const int _U_SOF6 = -58;
-const int _U_SOF6 = -57;
+const int _U_SOF2  = -62;
+const int _U_SOF3  = -61;
+const int _U_SOF4  = -60;
+const int _U_SOF5  = -59;
+const int _U_SOF6  = -58;
+const int _U_SOF6  = -57;
+const int _U_SOF10 = -54;
+const int _U_SOF11 = -53;
 
 /* Corresponding 2's COMPLEMENT OF EACH VALUE */
 const int DQT_starter = -37;
