@@ -52,6 +52,7 @@ typedef struct ReadImge {
 
 	unsigned char* new_image;
 } RI;
+
 RI* init_image(char* filename) {
 	FILE* file = fopen(filename, "rb");
 
@@ -82,22 +83,24 @@ static int length[2] = {0,0};
 static int* values; /*
 		     * This will just be the values of 0..length[1]
 		     */
+
 static int FIM[5] = {0x4a, 0x46, 0x49, 0x46, 0x00};
 static int DQT[5] = {
 	0xff, 0xdb, // define DQT
 	0, 0, // length
 	0
 };
+
 static char* QT_values;
 static int DHT[5] = {
 	0xff, 0xc4,
 	0, 0, // length
 	0,
-	0, 0, 0, 0, 0, 0, 0, 0, /*
-	0, 0, 0, 0, 0, 0, 0, 0,  * Number of symbols with lengths 1..16
-				 */
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, // Number of symbols with lengths 1..16(16 bytes)
 };
 static char* DHT_TOS;
+
 static int SOS[2] = {0xff, 0xda};
 
 /*
