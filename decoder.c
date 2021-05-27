@@ -233,7 +233,16 @@ RI* check_image_format(RI* image) {
 				FORMAT[1] = 0xdb;
 
 				image->new_image[index + 1] = 0xff;
-				image->new_image[index + 2] = 0xdb;
+
+				// Configure the type of table it is.
+				if(image->file_info[index + 2] == 0xdb)
+				{
+					image->new_image[index + 2] = 0xdb;
+				}
+				if(image->file_info[index + 2] == 0xc4)
+				{
+					image->new_image[index + 2] = 0xc4;
+				}
 				
 
 				printf("HERE: e0");
@@ -270,11 +279,12 @@ RI* check_image_format(RI* image) {
 				FORMAT[1] = 0xdb;
 
 				// Initalize the DQT for new_image
-				image->new_image[5] = 0xff;
-				image->new_image[6] = 0xdb; /*
+				image->new_image[20] = 0xff;
+				image->new_image[21] = 0xdb; /*
 							     * This will convert to -37, because of signed 2's
 							     * complement
 							     */
+					
 				printf("HERE: db, %d", image->file_info[4]);
 				break;
 			}
@@ -283,7 +293,7 @@ RI* check_image_format(RI* image) {
 			case 0xc4:
 			case 0xc5:
 			case 0xc6:
-			case 0xc7: {
+			case 0xc7: { // ToDo: Add Support for Invalid Formats?
 				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
 				exit(EXIT_FAILURE);
 				break;
@@ -294,6 +304,8 @@ RI* check_image_format(RI* image) {
 				break;
 			}
 		}
+
+		// ToDo: Configure the tables.
 	}
 
 
