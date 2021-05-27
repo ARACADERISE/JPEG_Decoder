@@ -24,6 +24,7 @@ Actions include that of the following:
 
 # JPEG file format explanation
 
+### The Header
 All JPEG files(unless it's a weird one) starts with _oxFF 0xD8_. This initializes the header.
 Then, we run into the JFIF segment marker. Which primarily says, "Hey, this is a JPEG file".
 
