@@ -4,6 +4,10 @@ JPEG decoder written in C.
 
 ### VERSION 0.1.0
 #### There will be a later version supporting odd JPEG file formats, such that of a JPEG file without the JFIF header
+#### Note: All new images rendered via this application will support the format:
+`0xFF 0xD8 0xFF 0xE0 0x00 0x00 0x4a 0x46 0x49 0x46 0x00 ...`
+                           ^
+                           Length of header
 
 Command Line args:
 
