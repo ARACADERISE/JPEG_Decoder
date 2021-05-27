@@ -1,6 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* DEFAULT BIT OFFSET  */
+#define DEFAULT_BIT_OFFSET	2
+static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
+
+/* HELPER FUNCTION TO OFFSET THE CURRENT PIXEL */
+#define OFFSET(pixel) ((pixel | _DBO) >> _DBO) 		// brightens the pixel
+#define REVERESE_OFFSET(pixel) ((pixel | _DBO) << _DBO) // dims the pixel
+#define _OFFSET(pixel) ((pixel & _DBO) >> _DBO) 	// Strictly matches the pixel to the 2 bits, then brightens it
+#define _REVERSE_OFFSET(pixel) ((pixel & _DBO) << _DBO) // Strictly matches the pixel to the 2 bits, then dims it
+
 /* UNSUPPORTED VALUES */
 const int U_SOF2  = 0xc2;
 const int U_SOF3  = 0xc3;
