@@ -1,15 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SOF 0xc0
-#define _SOF 0xc1 /*
+const int DQT_starter = -36;
+const int DHT_starter = -60; /*
+		      * Corresponding values:
+		      * 	-36: 0xe0
+		      * 	-60: 0xc4
+		      *
+		      * DQT_starter: this is the starting address of DQT in
+		      * 	-> signed 2's complememnt
+		      * DHT_starter: this is the starting address of DHT in
+		      * 	-> signed 2's complement
+		      */
+
+const int SOF = 0xc0;
+const int _SOF = 0xc1; /*
 		   * The SOF can either be 0xc0
 		   * or 0xc1. Dependable on the JPEG file.
 		   * 
 		   * Both values will stand for the SOF. Hence as to why
 		   * _SOF is assigned 0xc1. It has the same action as SOF
                    */
-#define SOS 0xda
+const int sos = 0xda;
+
+const int SOF_c = -64;
+const int _SOF_c = -63;
+const int SOS_c = -38; /*
+			* Corresponding values:
+			* 	-64: 0xc0
+			* 	-63: 0xc1
+			* 	-38: 0x38
+			*
+			* SOF_C is the Start Of Frame. Value has to be 0xc1 or 0xc0.
+			* 	->  -64 and -63 corresponds to the 
+			* 	-> signed 2's complement
+			* 	-> value of each value(being 0xc0 and 0xc1)
+			* SOS_C is the Start Of Scan. Value has to be 0xda.
+			* 	-> -38 corresponds to the signed 2's complement
+			* 	-> of the value 0xda
+			*/
 
 typedef struct ReadImge {
 	enum {
@@ -46,8 +75,8 @@ RI* init_image(char* filename) {
 	exit(EXIT_FAILURE);
 }
 
-const int start_image[2] = {-40, -1};
-const int _start_image[2] = {0xD8, 0xFF}; // -1 is the signed value of 0xFF, -40 is the signed value of 0xD
+const int start_image[2] = {-1, -40};
+const int _start_image[2] = {0xFF, 0xD8}; // -1 is the signed value of 0xFF, -40 is the signed value of 0xD
 const int marker_id[2] = {0xff, 0xe0};
 static int length[2] = {0,0};
 static int* values; /*
@@ -58,7 +87,7 @@ static int DQT[5] = {
 	0xff, 0xdb, // define DQT
 	0, 0, // length
 	0
-}
+};
 static char* QT_values;
 static int DHT[5] = {
 	0xff, 0xc4,
@@ -102,11 +131,36 @@ RI* check_image_format(RI* image) {
 	/*
 	 * Make sure the two bytes correspond
 	 */
-	if(image->file_info[0] == start_image[0]
-			&& image->file_info[1] == start_image[1])
+	if(image->file_info[0] == start_image[1]
+			&& image->file_info[1] == start_image[0])
 	{
 		image->new_image[0] = (unsigned char)_start_image[1];
 		image->new_image[1] = (unsigned char)_start_image[0];
+
+		/*
+		 * Corresponding values:
+		 * 	-> 16 will stand for 0xe0
+		 * 	-> 67 will stand for 0xdb
+		 * */
+		switch(image->file_info[4])
+		{
+			case 16: {
+				int value = (16 * 16) - 2;
+				image->file_info[4] = 0xe0;
+				printf("HERE: e0");
+				break;
+			}
+			case 67: {
+				int value = (67 * 3) + 18;
+				image->file_info[4] = 0xdb; /*
+							     * This will convert to
+							     * -37, because of
+							     *  signed 2's
+							     *  complement
+							     */
+				printf("HERE: db, %d", image->file_info[4]);
+			}
+		}
 	}
 
 
@@ -114,7 +168,7 @@ RI* check_image_format(RI* image) {
 }
 
 int main() {
-	RI* img = init_image("img.jpeg");
+	RI* img = init_image("img2.jpg");
 	
 	check_image_format(img);
 }
