@@ -68,6 +68,9 @@ typedef struct ReadImge {
 		jpeg = 1 // same as jpg
 	} ImageType;
 
+	// File to write to
+	FILE* _WRITE;
+
 	char* file_info;
 	size_t file_size;
 
@@ -84,6 +87,8 @@ RI* init_image(char* filename) {
 
 	if(file) {
 		RI* img_info = calloc(1, sizeof(*img_info));
+
+		img_info->_WRITE = fopen(filename, "wb");
 
 		fseek(file, 1, SEEK_END);
 		img_info->file_size = ftell(file);
