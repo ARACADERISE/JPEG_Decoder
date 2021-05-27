@@ -310,7 +310,8 @@ RI* check_image_format(RI* image) {
 		}
 
 		// ToDo: Configure the tables.
-		static int n_index = index;
+		static int n_index = 0;
+		n_index += index;
 
 redo:
 		for(int i = 0; i < image->new_image[index]; i++)
@@ -332,7 +333,11 @@ redo:
 				goto redo; // just redo it.
 				break;
 			}
-			default: goto end;break;
+			default: {
+				image->last_index = n_index;
+				goto end;
+				break;
+			}
 		}
 	}
 
