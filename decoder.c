@@ -53,6 +53,11 @@ typedef struct ReadImge {
 	unsigned char* new_image;
 } RI;
 
+/*
+ * Initialize the RI struct.
+ *
+ * Version: 0.1.0
+ */
 RI* init_image(char* filename) {
 	FILE* file = fopen(filename, "rb");
 
@@ -76,6 +81,8 @@ RI* init_image(char* filename) {
 	exit(EXIT_FAILURE);
 }
 
+
+/* HEADER */
 const int start_image[2] = {-1, -40};
 const int _start_image[2] = {0xFF, 0xD8}; // -1 is the signed value of 0xFF, -40 is the signed value of 0xD
 const int marker_id[2] = {0xff, 0xe0};
@@ -83,24 +90,27 @@ static int length[2] = {0,0};
 static int* values; /*
 		     * This will just be the values of 0..length[1]
 		     */
-
 static int FIM[5] = {0x4a, 0x46, 0x49, 0x46, 0x00};
+
+/* DQT Table */
 static int DQT[5] = {
 	0xff, 0xdb, // define DQT
 	0, 0, // length
 	0
 };
-
 static char* QT_values;
+
+/* DHT TABLE */
 static int DHT[5] = {
 	0xff, 0xc4,
 	0, 0, // length
 	0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, // Number of symbols with lengths 1..16(16 bytes)
+	0, 0, 0, 0, 0, 0, 0, 0 // Number of symbols with lengths 1..16(16 bytes)
 };
 static char* DHT_TOS;
 
+/* START OF FRAME MARkEr */
 static int SOS[2] = {0xff, 0xda};
 
 /*
@@ -126,6 +136,7 @@ static int SOS[2] = {0xff, 0xda};
 /*
  * This assigns the header to the new_image variable.
  *
+ * Version: 0.1.0
  */
 RI* check_image_format(RI* image) {
 	
