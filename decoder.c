@@ -198,6 +198,18 @@ RI* check_image_format(RI* image) {
 							    * This will convert to -37, because of signed 2's
 							    * complement
 							    */
+				image->new_image[5] = image->file_info[5];
+
+				int index = 5;
+				for(int i = 0; i < image->new_image[5]; i++) 
+				{ // this should assign the values of JFIF etc
+					index++;
+					image->new_image[index] = image->file_info[index];
+				}
+
+				image->new_image[index + 1] = 0xff;
+				image->new_image[index + 2] = 0xdb;
+				
 
 				printf("HERE: e0");
 				break;
