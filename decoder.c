@@ -205,7 +205,6 @@ RI* check_image_format(RI* image) {
 		 * 	-> 67 will stand for 0xdb
 		 * */
 
-		printf("%d", image->file_info[2]);
 		int CV = 0;
 		int index = 0;
 		switch(image->file_info[2])
@@ -267,8 +266,8 @@ RI* check_image_format(RI* image) {
 							     */
 				image->new_image[17] = image->file_info[17];
 				
-				index = 23;
-				//printf("HERE: db, %d", image->file_info[4]);
+				index = 17;
+
 				break;
 			}
 			case 0xc2:
@@ -288,33 +287,32 @@ RI* check_image_format(RI* image) {
 			}
 		}
 
-		// ToDo: Configure the tables.
 		static int n_index = 0;
 		n_index += index;
 
-redo:
-		for(int i = 0; i < image->new_image[index]; i++)
+		switch(image->file_info[index + 2])
 		{
-			n_index++;
-			image->new_image[n_index] = image->file_info[n_index];
-		}
+			case -124:
+			{
+				int amount = 0x84;
+				
+				for(int i = 0; i < amount; i++)
+				{
+					n_index++;
+					image->new_image[n_index] = image->file_info[n_index - 1];
+				        printf("\n%d\n", image->file_info[n_index]);	
+				}
 
-		switch(image->new_image[n_index])
-		{ // ToDo: Add functionality for checking for the next table.
-			case 16:
-			case 67: { // DQT and DHT.
-				// Assign length
-				image->new_image[n_index + 1] = 0x00;
-				image->new_image[n_index + 2] = image->file_info[n_index + 2];
-				
-				n_index += 2;
-				
-				goto redo; // just redo it.
-			}
-			default: {
-				image->last_index = n_index;
-				
-				goto end;
+				if(image->file_info[n_index + 2] == -64)
+				{
+					image->new_image[n_index + 1] = 0xFFC0;
+					image->new_image[n_index + 2] = image->file_info[n_index + 4];
+					n_index += 2;
+
+					image->last_index = n_index;
+
+					goto end;
+				}
 			}
 		}
 	}
@@ -332,4 +330,5 @@ int main(int argc, char **argv) {
 	RI* img = init_image("img3.jpeg");
 	
 	check_image_format(img);
+	printf("%d", img->new_image[img->last_index]);
 }
