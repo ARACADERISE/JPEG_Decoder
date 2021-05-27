@@ -15,6 +15,9 @@ static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
 #define _OFFSET(pixel) ((pixel << _DBO) >> 1) 	// Strictly matches the pixel to the 2 bits, then brightens it
 #define _REVERSE_OFFSET(pixel) ((pixel ^ _DBO) << 1) // Strictly matches the pixel to the 2 bits, then dims it
 
+/* TABLES */
+const int HT = 0xc4;
+const int QT = 0xdb;
 
 /* UNSUPPORTED VALUES. FOR ERROR CHECKING */
 const int U_SOF2  = 0xc2;
@@ -204,10 +207,10 @@ RI* check_image_format(RI* image) {
 		 * 	-> 16 will stand for 0xe0
 		 * 	-> 67 will stand for 0xdb
 		 * */
-
+		printf("%d", image->file_info[2]);
 		int CV = 0;
 		int index = 0;
-		switch(image->file_info[2])
+		switch(image->file_info[2]) // To-Do: Add checking for other things within the format
 		{
 			case -32: { // 0xe0
 				CV = (16 * 16) - 32;
@@ -230,6 +233,7 @@ RI* check_image_format(RI* image) {
 					image->new_image[index] = image->file_info[index]; 
 				}
 
+
 				FORMAT[1] = 0xdb;
 				break;
 			}
@@ -249,7 +253,7 @@ RI* check_image_format(RI* image) {
 				image->new_image[8] = 0x46;
 				image->new_image[9] = 0x00;
 
-				// Cover rest of bytes with default values
+				// oCover rest of bytes with default values
 				image->new_image[10] = 0x0100;
 				image->new_image[11] = 0x0001;
 				image->new_image[12] = 0x0100;
@@ -291,6 +295,7 @@ RI* check_image_format(RI* image) {
 		n_index += index;
 
 redo:
+		printf("HERE, %d", image->file_info[index]);
 		switch(image->file_info[index + 2])
 		{
 			case -124:
@@ -322,6 +327,79 @@ end:
 	return image;
 }
 
+void read_table(RI* image)
+{
+redo:
+	// Initialize header of the table and the table lenght.
+	image->new_image[image->last_index + 1] = image->file_info[image->last_index + 1];
+	image->new_image[image->last_index + 2] = image->file_info[image->last_index + 3];
+
+	// Assign values for the table.
+	static int index = 0;
+	index += image->last_index;
+
+	for(int i = 0; i < image->new_image[image->last_index + 2]; i++)
+	{
+		index++;
+		image->new_image[index] = image->file_info[index];
+
+		printf("\n\t%d\n", image->new_image[index]);
+	}
+
+	if(image->new_image[index - 1] == 196) {
+		image->last_index = index - 1;
+		goto redo;
+	}
+
+	image->new_image[index + 1] = image->file_info[index];
+	image->last_index = index + 1;
+}
+
+RI* read_frame(RI* image) 
+{
+	
+	switch(image->new_image[image->last_index])
+	{
+		case 17:
+		{ // 0xc0
+			// Initialize the length for the scanning of the framme
+			image->new_image[image->last_index + 1] = image->file_info[image->last_index + 2];
+			image->last_index++;
+
+			static int index = 0;
+			index += image->last_index;
+
+			for(int i = 0; i < image->new_image[index - 1]; i++)
+			{
+				image->new_image[image->last_index] = image->file_info[image->last_index];
+				image->last_index++;
+			}
+
+			if(image->file_info[image->last_index + 1] == -60)
+			{
+				read_table(image);
+			}
+
+			break;
+		}
+	}
+
+	if(image->file_info[image->last_index - 16] == -38)
+	{ // Time to work on the pixels :D
+		for(int i = image->last_index; i < image->file_size; i++)
+		{
+			image->new_image[i] = image->file_info[i];
+			if(i == image->file_size - 1) {
+				image->last_index = i;
+				break;
+			}
+		}
+	}
+
+	printf("%d", image->file_info[image->last_index - 2]);
+	return image;
+}
+
 int main(int argc, char **argv) {
 	if(argc < 2) {
 		fprintf(stderr, "Expected: FILENAME ACTION.\nExample: ./main.o img.jpg \"ODD\"\n\tThe ODD action takes and reverses each pixel by a default of 2 bits to the left.");
@@ -331,5 +409,6 @@ int main(int argc, char **argv) {
 	RI* img = init_image("img3.jpeg");
 	
 	check_image_format(img);
-	printf("%d", img->new_image[img->last_index]);
+	read_frame(img);
+	//printf("%d", img->new_image[img->last_index]);
 }
