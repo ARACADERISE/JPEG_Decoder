@@ -278,12 +278,12 @@ RI* check_image_format(RI* image) {
 				printf("HERE: db, %d", image->file_info[4]);
 				break;
 			}
-			case U_SOF2:
-			case U_SOF3:
-			case U_SOF4:
-			case U_SOF5:
-			case U_SOF6:
-			case U_SOF7: {
+			case 0xc2:
+			case 0xc3:
+			case 0xc4:
+			case 0xc5:
+			case 0xc6:
+			case 0xc7: {
 				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
 				exit(EXIT_FAILURE);
 				break;
@@ -300,7 +300,12 @@ RI* check_image_format(RI* image) {
 	return image;
 }
 
-int main() {
+int main(int argc, char **argv) {
+	if(argc < 2) {
+		fprintf(stderr, "Expected: FILENAME ACTION.\nExample: ./main.o img.jpg \"ODD\"\n\tThe ODD action takes and reverses each pixel by a default of 2 bits to the left.");
+		exit(EXIT_FAILURE);
+	}
+	printf("%s:%s\n", argv[1], argv[2]);
 	RI* img = init_image("img2.jpg");
 	
 	check_image_format(img);
