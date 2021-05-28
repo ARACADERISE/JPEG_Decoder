@@ -1,423 +1,94 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "decoder.h"
 
-/* DEFAULT BIT OFFSET  */
-#define DEFAULT_BIT_OFFSET	2
-static int _DBO =		DEFAULT_BIT_OFFSET; // this could change later on
-
-/* HELPER FUNCTION TO OFFSET THE CURRENT PIXEL 
- *
- * The normal diffference between both is 2 pixels when doing a normal offset.
- * With a reverse offset, the difference is 6 pixels(normally).
- */
-#define OFFSET(pixel) (pixel << _DBO) 		// brightens the pixel
-#define REVERESE_OFFSET(pixel) ((pixel ^ _DBO) << _DBO) // dims the pixel
-#define _OFFSET(pixel) ((pixel << _DBO) >> 1) 	// Strictly matches the pixel to the 2 bits, then brightens it
-#define _REVERSE_OFFSET(pixel) ((pixel ^ _DBO) << 1) // Strictly matches the pixel to the 2 bits, then dims it
-#define OFFSET_DEPENDABLE(pixel, size) ((pixel ^ (size - 1)) >> 1) // this will be used if the current pixel is down allot compared to it's neighbors. Max size is 4.
-#define REVERSE_DEPENDABLE(pixe, size) ((pixe << (size - 1)) >> 1) // this will be used if the current pixel is higher compared to it's neighbores. Max size is 4.
-
-/* TABLES */
-const int HT = 0xc4;
-const int QT = 0xdb;
-
-/* UNSUPPORTED VALUES. FOR ERROR CHECKING */
-const int U_SOF2  = 0xc2;
-const int U_SOF3  = 0xc3;
-const int U_SOF4  = 0xc4;
-const int U_SOF5  = 0xc5;
-const int U_SOF6  = 0xc6;
-const int U_SOF7  = 0xc7;
-const int U_SOF10 = 0xcA;
-const int U_SOF11 = 0xCB;
-
-/* UNSUPPORTED SIGNED 2's COMPLEMENT VALUES. FOR ERROR CHECKING */
-const int _U_SOF2  = -62;
-const int _U_SOF3  = -61;
-const int _U_SOF4  = -60;
-const int _U_SOF5  = -59;
-const int _U_SOF6  = -58;
-const int _U_SOF7  = -57;
-const int _U_SOF10 = -54;
-const int _U_SOF11 = -53;
-
-/* Corresponding 2's COMPLEMENT OF EACH VALUE */
-const int DQT_starter = -37;
-const int DHT_starter = -60; /*
-		      * Corresponding values:
-		      * 	-36: 0xe0
-		      * 	-60: 0xc4
-		      *
-		      * DQT_starter: this is the starting address of DQT in
-		      * 	-> signed 2's complememnt
-		      * DHT_starter: this is the starting address of DHT in
-		      * 	-> signed 2's complement
-		      */
-
-const int SOF = 0xc0;
-const int _SOF = 0xc1; /*
-		   * The SOF can either be 0xc0
-		   * or 0xc1. Dependable on the JPEG file.
-		   * 
-		   * Both values will stand for the SOF. Hence as to why
-		   * _SOF is assigned 0xc1. It has the same action as SOF
-                   */
-const int sos = 0xda;
-
-const int SOF_c = -64;
-const int _SOF_c = -63;
-const int SOS_c = -38; /*
-			* Corresponding values:
-			* 	-64: 0xc0
-			* 	-63: 0xc1
-			* 	-38: 0x38
-			*
-			* SOF_C is the Start Of Frame. Value has to be 0xc1 or 0xc0.
-			* 	->  -64 and -63 corresponds to the 
-			* 	-> signed 2's complement
-			* 	-> value of each value(being 0xc0 and 0xc1)
-			* SOS_C is the Start Of Scan. Value has to be 0xda.
-			* 	-> -38 corresponds to the signed 2's complement
-			* 	-> of the value 0xda
-			*/
-
-typedef struct ReadImge {
-	enum {
-		jpg = 1,
-		png = 2,
-		jpeg = 1 // same as jpg
-	} ImageType;
-
-	// File to write to
-	char* _WRITE;
-
-	char* file_info;
-	size_t file_size;
-
-	unsigned char* new_image;
-	int last_index; // for checking
-} RI;
-
-/*
- * Initialize the RI struct.
- *
- * Version: 0.1.0
- */
-RI* init_image(char* filename) {
-	FILE* file = fopen(filename, "rb");
-
-	if(file) {
-		RI* img_info = calloc(1, sizeof(*img_info));
-
-		img_info->_WRITE = filename;
-
-		fseek(file, 1, SEEK_END);
-		img_info->file_size = ftell(file);
-		fseek(file, 1, SEEK_SET);
-
-		img_info->file_info = calloc(img_info->file_size, sizeof(*img_info->file_info));
-
-		fread(img_info->file_info, img_info->file_size, 1, file);
-
-		fclose(file);
-
-		return img_info;
-	}
-
-	fprintf(stderr, "No such file");
-	exit(EXIT_FAILURE);
-}
-
-
-/* HEADER */
-const int start_image[2] = {-1, -40};
-const int _start_image[2] = {0xFF, 0xD8}; // -1 is the signed value of 0xFF, -40 is the signed value of 0xD
-const int marker_id[2] = {0xff, 0xe0};
-static int length[2] = {0,0};
-static int* values; /*
-		     * This will just be the values of 0..length[1]
-		     */
-static int FIM[5] = {0x4a, 0x46, 0x49, 0x46, 0x00};
-
-/* DQT Table */
-static int DQT[5] = {
-	0xff, 0xdb, // define DQT
-	0, 0, // length
-	0
-};
-static char* QT_values;
-
-/* DHT TABLE */
-static int DHT[5] = {
-	0xff, 0xc4,
-	0, 0, // length
-	0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0 // Number of symbols with lengths 1..16(16 bytes)
-};
-static char* DHT_TOS;
-
-/* START OF FRAME MARkEr */
-static int SOS[2] = {0xff, 0xda};
-
-/* 
- * LAYOUT OF FILE. THIS WILL BE CHECKED AT THE END TO MAKE SURE THE
- * FILE FORMAT IS OKAY.
- */
-static int FORMAT[15];
-
-/*
- * TESTING PURPOSES. DO NOT USE.
- *
- * {
- *	0xff, 0xd8, 			// header
- *	0xff, 0xe0, 			// marker id
- *	0, 0, 	    			// length
- *	0x4a, 0x46, 0x49, 0x46, 0x00,	// FIM(File Id Mark)
- *	0xff, 0xdb,			// DQT
- *	0, 0,				// Length of QT
- *	0, 				// QT values(0..3)
- *	0xff, 0xc4, 			// DHT
- *	0, 0, 				// Length of DHT
- *	0,				// HT values(0..3)
- *	0xFF, 0xDA			// Start of scan
- * }
- * }
- */
-
-
-/*
- * This assigns the header to the new_image variable.
- *
- * Version: 0.1.0
- */
-RI* check_image_format(RI* image) {
-	
-	image->new_image = calloc(image->file_size, sizeof(*image->new_image));
-
-	/*
-	 * Make sure the two bytes correspond
-	 */
-	if(image->file_info[0] == start_image[1]
-			&& image->file_info[1] == start_image[0])
-	{
-		image->new_image[0] = (unsigned char)_start_image[1];
-		image->new_image[1] = (unsigned char)_start_image[0];
-
-		/*
-		 * Corresponding values:
-		 * 	-> 16 will stand for 0xe0
-		 * 	-> 67 will stand for 0xdb
-		 * */
-		printf("%d", image->file_info[2]);
-		int CV = 0;
-		int index = 0;
-		switch(image->file_info[2]) // To-Do: Add checking for other things within the format
-		{
-			case -32: { // 0xe0
-				CV = (16 * 16) - 32;
-
-				FORMAT[0] = 0xe0;
-
-				// Initalize the Segment Marker for new_image(JFIF)
-				image->new_image[2] = 0x00E0; /*
-							    * This will convert to -37, because of signed 2's
-							    * complement
-							    */
-				image->new_image[3] = 0x00;
-				image->new_image[4] = image->file_info[4];
-
-				index = 4;
-
-				for(int i = 0; i < image->new_image[4]; i++) 
-				{ // this should assign the values of JFIF etc
-					index++;
-					image->new_image[index] = image->file_info[index]; 
-				}
-
-
-				FORMAT[1] = 0xdb;
-				break;
-			}
-			case -37: { // 0xdb
-				CV = (67 * 3) + 18;
-
-				FORMAT[0] = 0xe0;
-
-				// The new image supports the same format: 0xff, 0xe0 -> Segment Marker(for JFIF)
-				image->new_image[3] = 0xffe0;
-				image->new_image[4] = 0x000A;
-				
-				// JFIF
-				image->new_image[5] = 0x4a;
-				image->new_image[6] = 0x46;
-				image->new_image[7] = 0x49;
-				image->new_image[8] = 0x46;
-				image->new_image[9] = 0x00;
-
-				// oCover rest of bytes with default values
-				image->new_image[10] = 0x0100;
-				image->new_image[11] = 0x0001;
-				image->new_image[12] = 0x0100;
-				image->new_image[13] = 0x0100;
-				image->new_image[14] = 0x0000;
-
-				FORMAT[1] = 0xdb;
-
-				// Initalize the DQT for new_image
-				image->new_image[15] = 0xff;
-				image->new_image[16] = 0xdb; /*
-							     * This will convert to -37, because of signed 2's
-							     * complement
-							     */
-				image->new_image[17] = image->file_info[17];
-				
-				index = 17;
-
-				break;
-			}
-			case 0xc2:
-			case 0xc3:
-			case 0xc4:
-			case 0xc5:
-			case 0xc6:
-			case 0xc7: { // ToDo: Add Support for Invalid Formats?
-				fprintf(stderr, "Error: Invalid Format. Expected DB or E0, found %d.", image->file_info[4]);
-				exit(EXIT_FAILURE);
-				break;
-			}
-			default: {
-				fprintf(stderr, "Error: Invalid Format.");
-				exit(EXIT_FAILURE);
-				break;
-			}
-		}
-
-		static int n_index = 0;
-		n_index += index;
-
-redo:
-		printf("HERE, %d", image->file_info[index]);
-		switch(image->file_info[index + 2])
-		{
-			case -124:
-			{
-				int amount = 0x84;
-				
-				for(int i = 0; i < amount; i++)
-				{
-					n_index++;
-					image->new_image[n_index] = image->file_info[n_index - 1];
-				        printf("\n%d\n", image->file_info[n_index]);	
-				}
-
-				if(image->file_info[n_index + 2] == -64)
-				{
-					image->new_image[n_index + 1] = 0xFFC0;
-					image->new_image[n_index + 2] = image->file_info[n_index + 4];
-					n_index += 2;
-
-					image->last_index = n_index;
-
-					goto end;
-				} else goto redo;
-			}
-		}
-	}
-
-end:
-	return image;
-}
-
-void read_table(RI* image)
+RI* init_image(char *filename)
 {
-redo:
-	// Initialize header of the table and the table lenght.
-	image->new_image[image->last_index + 1] = image->file_info[image->last_index + 1];
-	image->new_image[image->last_index + 2] = image->file_info[image->last_index + 3];
+    RI* img = calloc(1, sizeof(*img));
 
-	// Assign values for the table.
-	static int index = 0;
-	index += image->last_index;
+    img->filename = filename;
 
-	for(int i = 0; i < image->new_image[image->last_index + 2]; i++)
-	{
-		index++;
-		image->new_image[index] = image->file_info[index];
+    FILE* file = fopen(img->filename, "rb");
 
-		printf("\n\t%d\n", image->new_image[index]);
-	}
+    if(file)
+    {
+        fseek(file, 1, SEEK_END);
+        img->file_size = ftell(file);
+        fseek(file, 1, SEEK_SET);
 
-	if(image->new_image[index - 1] == 196) {
-		image->last_index = index - 1;
-		goto redo;
-	}
+        img->file_info = calloc(img->file_size, sizeof(*img->file_info));\
+        fread(img->file_info, img->file_size, 1, file);
 
-	image->new_image[index + 1] = image->file_info[index];
-	image->last_index = index + 1;
+        img->new_image = calloc(img->file_size, sizeof(*img->new_image));
+
+        fclose(file);
+
+        return img;
+    }
+
+    fprintf(stderr, "No such file");
+    exit(EXIT_FAILURE);
 }
 
-unsigned char contrast_pixel(RI* image)
+RI* read_header(RI* img)
 {
+    if(img->file_info[0] == -40)
+    {
+        img->new_image[0] = 0xFF;
+        img->new_image[1] = 0xD8;
 
-}
+        switch(img->file_info[2])
+        {
+            case -32:
+            {
+                // Marker Id
+                img->new_image[2] = 0xFF;
+                img->new_image[3] = 0xE0;
 
-RI* read_frame(RI* image) 
-{
-	
-	switch(image->new_image[image->last_index])
-	{
-		case 17:
-		{ // 0xc0
-			// Initialize the length for the scanning of the framme
-			image->new_image[image->last_index + 1] = image->file_info[image->last_index + 2];
-			image->last_index++;
+                // Length
+                img->new_image[4] = 0x00;
+                img->new_image[5] = img->file_info[4];
 
-			static int index = 0;
-			index += image->last_index;
+                // JFIF
+                img->new_image[6] = 0x4a;
+                img->new_image[7] = 0x46;
+                img->new_image[8] = 0x49;
+                img->new_image[9] = 0x46;
+                img->new_image[10] = 0x00;
 
-			for(int i = 0; i < image->new_image[index - 1]; i++)
-			{
-				image->new_image[image->last_index] = image->file_info[image->last_index];
-				image->last_index++;
-			}
+                int length = img->new_image[5];
 
-			if(image->file_info[image->last_index + 1] == -60)
-			{
-				read_table(image);
-			}
+                // Create two variables to reference both arrays
+                int index = 6;
+                int _index = 10;
 
-			break;
-		}
-	}
+                for(int i = 0; i < length; i++)
+                {
+                    index++;
+                    _index++;
+                    img->new_image[_index] = img->file_info[index];
+                }
 
-	if(image->file_info[image->last_index - 16] == -38)
-	{ // Time to work on the pixels :D
-		contrast_pixel(image);
-		/*
-		for(int i = image->last_index; i < image->file_size; i++)
-		{
-			image->new_image[i] = image->file_info[i];
-			if(i == image->file_size - 1) {
-				image->last_index = i;
-				break;
-			}
-		}*/
-	}
+                // Assign the values
+                int ind = _index;
+                for(int i = 0; i <= (img->new_image[ind] * -1) + 22; i++)
+                {
+                    _index++;
+                    index++;
+                    img->new_image[_index] = img->file_info[index + 3];
+                }
 
-	printf("%d", image->file_info[image->last_index - 2]);
-	return image;
-}
+                index += 3;
+            }
+        }
+    }
 
-int main(int argc, char **argv) {
-	if(argc < 2) {
-		fprintf(stderr, "Expected: FILENAME ACTION.\nExample: ./main.o img.jpg \"ODD\"\n\tThe ODD action takes and reverses each pixel by a default of 2 bits to the left.");
-		exit(EXIT_FAILURE);
-	}
-	//printf("%s:%s\n", argv[1], argv[2]);
-	RI* img = init_image("img3.jpeg");
-	
-	check_image_format(img);
-	read_frame(img);
-	//printf("%d", img->new_image[img->last_index]);
+    FILE* file = fopen("NEW", "wb");
+
+    for(int i = 0; i < img->file_size; i++)
+    {
+        fwrite(&img->new_image[i], sizeof(img->new_image[i]), 1, file);
+    }
+
+    fclose(file);
+
+    return img;
 }
